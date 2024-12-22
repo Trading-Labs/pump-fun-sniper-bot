@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"net/url"
 
-	"github.com/1fge/pump-fun-sniper-bot/pkg/jito-go/pkg"
 	"github.com/1fge/pump-fun-sniper-bot/pkg/jito-go/proto"
 	"github.com/gagliardetto/solana-go/rpc"
 	"google.golang.org/grpc"
@@ -23,8 +22,6 @@ type Client struct {
 
 	SearcherService          proto.SearcherServiceClient
 	BundleStreamSubscription proto.SearcherService_SubscribeBundleResultsClient // Used for receiving *proto.BundleResult (bundle broadcast status info).
-
-	Auth *pkg.AuthenticationService
 
 	ErrChan <-chan error // ErrChan is used for dispatching errors from functions executed within goroutines.
 }

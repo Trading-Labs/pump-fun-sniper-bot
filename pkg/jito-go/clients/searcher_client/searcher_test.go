@@ -2,6 +2,7 @@ package searcher_client
 
 import (
 	"context"
+	jitogo "github.com/1fge/pump-fun-sniper-bot/pkg/jito-go"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -39,7 +40,7 @@ func Test_SearcherClient(t *testing.T) {
 
 	client, err := New(
 		ctx,
-		jito_go.NewYork.BlockEngineURL,
+		jitogo.NewYork.BlockEngineURL,
 		rpc.New(rpcAddr),
 		rpc.New(rpc.MainNetBeta_RPC),
 		solana.MustPrivateKeyFromBase58(privKey),
@@ -55,10 +56,10 @@ func Test_SearcherClient(t *testing.T) {
 	}
 
 	regions := []string{
-		jito_go.Amsterdam.Region,
-		jito_go.NewYork.Region,
-		jito_go.Frankfurt.Region,
-		jito_go.Tokyo.Region,
+		jitogo.Amsterdam.Region,
+		jitogo.NewYork.Region,
+		jitogo.Frankfurt.Region,
+		jitogo.Tokyo.Region,
 	}
 
 	bundles := []string{
@@ -75,7 +76,7 @@ func Test_SearcherClient(t *testing.T) {
 		var resp *proto.GetRegionsResponse
 		resp, err = client.GetRegions()
 		assert.NoError(t, err)
-		assert.Equal(t, jito_go.NewYork.Region, resp.CurrentRegion)
+		assert.Equal(t, jitogo.NewYork.Region, resp.CurrentRegion)
 	})
 
 	t.Run("GetConnectedLeaders", func(t *testing.T) {

@@ -16,7 +16,6 @@ require (
 	github.com/gagliardetto/solana-go v1.11.0
 	github.com/gagliardetto/treeout v0.1.4
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/gookit/color v1.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.9.0
 )
@@ -42,7 +41,6 @@ require (
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
-	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.mongodb.org/mongo-driver v1.15.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect

@@ -36,12 +36,8 @@ func New(ctx context.Context, grpcDialURL string, jitoRpcClient, rpcClient *rpc.
 	}
 
 	searcherService := proto.NewSearcherServiceClient(conn)
-	authService := pkg.NewAuthenticationService(conn, privateKey)
-	if err = authService.AuthenticateAndRefresh(proto.Role_SEARCHER); err != nil {
-		return nil, err
-	}
 
-	subBundleRes, err := searcherService.SubscribeBundleResults(authService.GrpcCtx, &proto.SubscribeBundleResultsRequest{})
+	subBundleRes, err := searcherService.SubscribeBundleResults(context.Background(), &proto.SubscribeBundleResultsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -52,14 +48,13 @@ func New(ctx context.Context, grpcDialURL string, jitoRpcClient, rpcClient *rpc.
 		JitoRpcConn:              jitoRpcClient,
 		SearcherService:          searcherService,
 		BundleStreamSubscription: subBundleRes,
-		Auth:                     authService,
 		ErrChan:                  chErr,
 	}, nil
 }
 
 // NewMempoolStreamAccount creates a new mempool subscription on specific Solana accounts.
 func (c *Client) NewMempoolStreamAccount(accounts, regions []string) (proto.SearcherService_SubscribeMempoolClient, error) {
-	return c.SearcherService.SubscribeMempool(c.Auth.GrpcCtx, &proto.MempoolSubscription{
+	return c.SearcherService.SubscribeMempool(context.Background(), &proto.MempoolSubscription{
 		Msg: &proto.MempoolSubscription_WlaV0Sub{
 			WlaV0Sub: &proto.WriteLockedAccountSubscriptionV0{
 				Accounts: accounts,
@@ -71,7 +66,7 @@ func (c *Client) NewMempoolStreamAccount(accounts, regions []string) (proto.Sear
 
 // NewMempoolStreamProgram creates a new mempool subscription on specific Solana programs.
 func (c *Client) NewMempoolStreamProgram(programs, regions []string) (proto.SearcherService_SubscribeMempoolClient, error) {
-	return c.SearcherService.SubscribeMempool(c.Auth.GrpcCtx, &proto.MempoolSubscription{
+	return c.SearcherService.SubscribeMempool(context.Background(), &proto.MempoolSubscription{
 		Msg: &proto.MempoolSubscription_ProgramV0Sub{
 			ProgramV0Sub: &proto.ProgramSubscriptionV0{
 				Programs: programs,
@@ -95,8 +90,6 @@ func (c *Client) SubscribeAccountsMempoolTransactions(ctx context.Context, accou
 		for {
 			select {
 			case <-ctx.Done():
-				return
-			case <-c.Auth.GrpcCtx.Done():
 				return
 			default:
 				var receipt *proto.PendingTxNotification
@@ -140,8 +133,6 @@ func (c *Client) SubscribeProgramsMempoolTransactions(ctx context.Context, progr
 			select {
 			case <-ctx.Done():
 				return
-			case <-c.Auth.GrpcCtx.Done():
-				return
 			default:
 				var receipt *proto.PendingTxNotification
 				receipt, err = sub.Recv()
@@ -170,19 +161,19 @@ func (c *Client) SubscribeProgramsMempoolTransactions(ctx context.Context, progr
 }
 
 func (c *Client) GetRegions(opts ...grpc.CallOption) (*proto.GetRegionsResponse, error) {
-	return c.SearcherService.GetRegions(c.Auth.GrpcCtx, &proto.GetRegionsRequest{}, opts...)
+	return c.SearcherService.GetRegions(context.Background(), &proto.GetRegionsRequest{}, opts...)
 }
 
 func (c *Client) GetConnectedLeaders(opts ...grpc.CallOption) (*proto.ConnectedLeadersResponse, error) {
-	return c.SearcherService.GetConnectedLeaders(c.Auth.GrpcCtx, &proto.ConnectedLeadersRequest{}, opts...)
+	return c.SearcherService.GetConnectedLeaders(context.Background(), &proto.ConnectedLeadersRequest{}, opts...)
 }
 
 func (c *Client) GetConnectedLeadersRegioned(regions []string, opts ...grpc.CallOption) (*proto.ConnectedLeadersRegionedResponse, error) {
-	return c.SearcherService.GetConnectedLeadersRegioned(c.Auth.GrpcCtx, &proto.ConnectedLeadersRegionedRequest{Regions: regions}, opts...)
+	return c.SearcherService.GetConnectedLeadersRegioned(context.Background(), &proto.ConnectedLeadersRegionedRequest{Regions: regions}, opts...)
 }
 
 func (c *Client) GetTipAccounts(opts ...grpc.CallOption) (*proto.GetTipAccountsResponse, error) {
-	return c.SearcherService.GetTipAccounts(c.Auth.GrpcCtx, &proto.GetTipAccountsRequest{}, opts...)
+	return c.SearcherService.GetTipAccounts(context.Background(), &proto.GetTipAccountsRequest{}, opts...)
 }
 
 // GetRandomTipAccount returns a random Jito TipAccount.
@@ -196,12 +187,12 @@ func (c *Client) GetRandomTipAccount(opts ...grpc.CallOption) (string, error) {
 }
 
 func (c *Client) GetNextScheduledLeader(regions []string, opts ...grpc.CallOption) (*proto.NextScheduledLeaderResponse, error) {
-	return c.SearcherService.GetNextScheduledLeader(c.Auth.GrpcCtx, &proto.NextScheduledLeaderRequest{Regions: regions}, opts...)
+	return c.SearcherService.GetNextScheduledLeader(context.Background(), &proto.NextScheduledLeaderRequest{Regions: regions}, opts...)
 }
 
 // NewBundleSubscriptionResults creates a new bundle subscription, allowing to receive information about broadcasted bundles.
 func (c *Client) NewBundleSubscriptionResults(opts ...grpc.CallOption) (proto.SearcherService_SubscribeBundleResultsClient, error) {
-	return c.SearcherService.SubscribeBundleResults(c.Auth.GrpcCtx, &proto.SubscribeBundleResultsRequest{}, opts...)
+	return c.SearcherService.SubscribeBundleResults(context.Background(), &proto.SubscribeBundleResultsRequest{}, opts...)
 }
 
 // BroadcastBundle sends a bundle of transactions on chain thru Jito.
@@ -211,7 +202,7 @@ func (c *Client) BroadcastBundle(transactions []*solana.Transaction, opts ...grp
 		return nil, err
 	}
 
-	return c.SearcherService.SendBundle(c.Auth.GrpcCtx, &proto.SendBundleRequest{Bundle: bundle}, opts...)
+	return c.SearcherService.SendBundle(context.Background(), &proto.SendBundleRequest{Bundle: bundle}, opts...)
 }
 
 // BroadcastBundleWithConfirmation sends a bundle of transactions on chain thru Jito BlockEngine and waits for its confirmation.
@@ -226,8 +217,8 @@ func (c *Client) BroadcastBundleWithConfirmation(ctx context.Context, transactio
 	retries := 5
 	for i := 0; i < retries; i++ {
 		select {
-		case <-c.Auth.GrpcCtx.Done():
-			return nil, c.Auth.GrpcCtx.Err()
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		default:
 
 			// waiting 5s to check bundle result
